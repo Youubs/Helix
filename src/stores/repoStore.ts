@@ -17,6 +17,7 @@ interface RepoState {
   setActiveTab: (id: string) => void
   setRecentRepos: (repos: RepoInfo[]) => void
   addRecentRepo: (repo: RepoInfo) => void
+  removeRecentRepo: (path: string) => void
   togglePin: (path: string) => void
 }
 
@@ -60,6 +61,12 @@ export const useRepoStore = create<RepoState>()(
       const filtered = state.recentRepos.filter((r) => r.path !== repo.path)
       return { recentRepos: [repo, ...filtered].slice(0, 20) }
     })
+  },
+
+  removeRecentRepo: (path) => {
+    set((state) => ({
+      recentRepos: state.recentRepos.filter((r) => r.path !== path)
+    }))
   },
 
   togglePin: (path) => {

@@ -10,6 +10,10 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+<br />
+
+<img src="docs/assets/welcome-screen.png" alt="Helix Welcome Screen" width="850" />
+
 </div>
 
 ---

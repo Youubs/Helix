@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { FolderOpen, GitBranch, Download, Plus, Pin, Clock, Star } from 'lucide-react'
+import { FolderOpen, GitBranch, Download, Plus, Pin, Clock, Star, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useRepoStore } from '@/stores/repoStore'
 import { useGit } from '@/hooks/useGit'
 import { Button } from '@/components/ui/Button'
@@ -76,6 +77,13 @@ function RepoItem({
   pinned?: boolean
 }) {
   const togglePin = useRepoStore((s) => s.togglePin)
+  const removeRecentRepo = useRepoStore((s) => s.removeRecentRepo)
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    removeRecentRepo(repo.path)
+    toast.success(`Removed "${repo.name}" from recent repositories`)
+  }
 
   return (
     <button
@@ -83,9 +91,9 @@ function RepoItem({
       className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[var(--bg-hover)] group"
     >
       {pinned ? (
-        <Star size={12} className="text-[var(--color-warning)] fill-current" />
+        <Star size={12} className="text-[var(--color-warning)] fill-current shrink-0" />
       ) : (
-        <Clock size={12} className="text-[var(--text-tertiary)]" />
+        <Clock size={12} className="text-[var(--text-tertiary)] shrink-0" />
       )}
       <span className="text-sm text-[var(--text-primary)] flex-1 text-left truncate">
         {repo.name}
@@ -93,12 +101,25 @@ function RepoItem({
       <span className="text-[10px] text-[var(--text-tertiary)] truncate max-w-[200px]">
         {repo.path}
       </span>
-      <button
-        onClick={(e) => { e.stopPropagation(); togglePin(repo.path) }}
-        className="opacity-0 group-hover:opacity-100 p-0.5 text-[var(--text-tertiary)] hover:text-[var(--color-warning)]"
-      >
-        <Pin size={11} />
-      </button>
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            togglePin(repo.path)
+          }}
+          className="p-1 rounded text-[var(--text-tertiary)] hover:text-[var(--color-warning)] hover:bg-[var(--bg-app)] transition-colors"
+          title={pinned ? 'Unpin repository' : 'Pin repository'}
+        >
+          <Pin size={11} />
+        </button>
+        <button
+          onClick={handleRemove}
+          className="p-1 rounded text-[var(--text-tertiary)] hover:text-[var(--diff-del-text)] hover:bg-[var(--bg-app)] transition-colors"
+          title="Remove from recent repositories"
+        >
+          <Trash2 size={11} />
+        </button>
+      </div>
     </button>
   )
 }
