@@ -71,18 +71,15 @@ function parseRefs(refString: string): RefInfo[] {
       continue
     }
     if (ref.includes('->')) {
-      const [head, target] = ref.split('->').map((s) => s.trim())
-      if (head === 'HEAD') {
-        result.push({ name: 'HEAD', type: 'head' as const })
-      }
-      if (target) {
+      const [, target] = ref.split('->').map((s) => s.trim())
+      if (target && target !== 'HEAD' && !target.endsWith('/HEAD')) {
         result.push({
           name: target,
           type: target.includes('/') ? ('remote-branch' as const) : ('local-branch' as const)
         })
       }
-    } else if (ref === 'HEAD') {
-      result.push({ name: 'HEAD', type: 'head' as const })
+    } else if (ref === 'HEAD' || ref.endsWith('/HEAD')) {
+      continue
     } else if (ref.startsWith('tag: ')) {
       result.push({ name: ref.replace('tag: ', ''), type: 'tag' as const })
     } else if (ref.includes('/')) {

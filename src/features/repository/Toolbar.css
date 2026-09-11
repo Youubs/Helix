@@ -2,7 +2,8 @@
   height: 48px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-default);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   padding: 0 12px;
   gap: 0;
@@ -13,6 +14,8 @@
 .toolbar-context {
   display: flex;
   align-items: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .toolbar-label {
@@ -22,6 +25,7 @@
   text-transform: uppercase;
   color: var(--text-tertiary);
   margin-right: 4px;
+  flex-shrink: 0;
 }
 
 .toolbar-dropdown {
@@ -36,6 +40,8 @@
   padding: 3px 6px;
   border-radius: 4px;
   cursor: pointer;
+  min-width: 0;
+  max-width: 220px;
 }
 .toolbar-dropdown:hover {
   background: var(--bg-hover);
@@ -45,10 +51,10 @@
   font-size: 14px;
   color: var(--text-tertiary);
   margin: 0 6px;
+  flex-shrink: 0;
 }
 
 .toolbar-center {
-  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -58,7 +64,9 @@
 .toolbar-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 2px;
+  min-width: 0;
 }
 
 .toolbar-action-btn {

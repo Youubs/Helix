@@ -26,7 +26,7 @@ interface GitState {
   setStatus: (status: StatusResult | null) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  refresh: () => Promise<void>
+  refresh: (silent?: boolean) => Promise<void>
 }
 
 export const useGitStore = create<GitState>((set, get) => ({
@@ -48,9 +48,11 @@ export const useGitStore = create<GitState>((set, get) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
 
-  refresh: async () => {
+  refresh: async (silent = false) => {
     try {
-      set({ loading: true, error: null })
+      if (!silent || get().commits.length === 0) {
+        set({ loading: true, error: null })
+      }
 
       const [logResult, branchResult, statusResult, tagResult, stashResult, remoteResult] =
         await Promise.all([

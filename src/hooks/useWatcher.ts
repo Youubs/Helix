@@ -5,28 +5,20 @@ export function useWatcher() {
   const refresh = useGitStore((s) => s.refresh)
 
   useEffect(() => {
-    // 1. Listen for filesystem and git changes from Electron main watcher
+    // 1. Listen for filesystem and git changes from Electron main watcher (debounced chokidar)
     const cleanup = window.gitAPI.onRepoChanged(() => {
-      refresh()
+      refresh(true)
     })
 
     // 2. Automatically refresh whenever window regains focus (switching back from IDE/Terminal)
     const handleFocus = () => {
-      refresh()
+      refresh(true)
     }
     window.addEventListener('focus', handleFocus)
-
-    // 3. Periodic heartbeat (every 3 seconds) while document is visible
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        refresh()
-      }
-    }, 3000)
 
     return () => {
       cleanup()
       window.removeEventListener('focus', handleFocus)
-      clearInterval(interval)
     }
   }, [refresh])
 }

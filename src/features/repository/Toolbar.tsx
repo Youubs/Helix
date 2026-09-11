@@ -45,17 +45,17 @@ export function Toolbar() {
       {/* Left — repo & branch context */}
       <div className="toolbar-context titlebar-no-drag">
         <span className="toolbar-label">repository</span>
-        <button className="toolbar-dropdown" onClick={() => openRepo()} title="Open another repository in new tab">
-          {repoName}
-          <ChevronDown size={10} />
+        <button className="toolbar-dropdown" onClick={() => openRepo()} title={repoName}>
+          <span className="truncate">{repoName}</span>
+          <ChevronDown size={10} className="shrink-0" />
         </button>
 
         <span className="toolbar-separator">{'\u203A'}</span>
 
         <span className="toolbar-label">branch</span>
-        <button className="toolbar-dropdown font-mono text-[var(--accent-primary)]">
-          {currentBranch}
-          <ChevronDown size={10} />
+        <button className="toolbar-dropdown font-mono text-[var(--accent-primary)]" title={currentBranch}>
+          <span className="truncate">{currentBranch}</span>
+          <ChevronDown size={10} className="shrink-0" />
         </button>
       </div>
 

@@ -1,0 +1,62 @@
+/* Syntax highlighting tokens (Dark theme default) */
+:root {
+  --syntax-keyword: #ff7b72;
+  --syntax-function: #d2a8ff;
+  --syntax-string: #a5d6ff;
+  --syntax-number: #79c0ff;
+  --syntax-comment: #8b949e;
+  --syntax-operator: #ff7b72;
+  --syntax-punctuation: #8b949e;
+  --syntax-property: #79c0ff;
+  --syntax-class-name: #ffa657;
+  --syntax-boolean: #ff7b72;
+  --syntax-tag: #7ee787;
+  --syntax-attr-name: #79c0ff;
+  --syntax-attr-value: #a5d6ff;
+  --syntax-builtin: #ffa657;
+  --syntax-regex: #7ee787;
+  --syntax-variable: #ffa657;
+  --syntax-constant: #79c0ff;
+}
+
+[data-theme="light"] {
+  --syntax-keyword: #cf222e;
+  --syntax-function: #8250df;
+  --syntax-string: #0a3069;
+  --syntax-number: #0550ae;
+  --syntax-comment: #6e7781;
+  --syntax-operator: #cf222e;
+  --syntax-punctuation: #57606a;
+  --syntax-property: #0550ae;
+  --syntax-class-name: #953800;
+  --syntax-boolean: #cf222e;
+  --syntax-tag: #116329;
+  --syntax-attr-name: #0550ae;
+  --syntax-attr-value: #0a3069;
+  --syntax-builtin: #953800;
+  --syntax-regex: #116329;
+  --syntax-variable: #953800;
+  --syntax-constant: #0550ae;
+}
+
+.token.keyword { color: var(--syntax-keyword); font-weight: 500; }
+.token.function, .token.function-definition { color: var(--syntax-function); }
+.token.string { color: var(--syntax-string); }
+.token.number { color: var(--syntax-number); }
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: var(--syntax-comment); font-style: italic; }
+.token.operator { color: var(--syntax-operator); }
+.token.punctuation { color: var(--syntax-punctuation); }
+.token.property { color: var(--syntax-property); }
+.token.class-name { color: var(--syntax-class-name); }
+.token.boolean { color: var(--syntax-boolean); }
+.token.tag { color: var(--syntax-tag); }
+.token.attr-name { color: var(--syntax-attr-name); }
+.token.attr-value { color: var(--syntax-attr-value); }
+.token.builtin { color: var(--syntax-builtin); }
+.token.regex { color: var(--syntax-regex); }
+.token.variable { color: var(--syntax-variable); }
+.token.constant { color: var(--syntax-constant); }
+.token.selector { color: var(--syntax-class-name); }
+.token.important { color: var(--syntax-keyword); font-weight: bold; }
+.token.bold { font-weight: bold; }
+.token.italic { font-style: italic; }

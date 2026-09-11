@@ -77,16 +77,16 @@ describe('mergeRefs - deduplication', () => {
     expect(names).not.toContain('akr/magic-link-teams')
   })
 
-  it('HEAD + local + remote produces max 2 labels (HEAD + merged)', () => {
+  it('omits HEAD and produces only 1 merged label for local + remote', () => {
     const refs: RefInfo[] = [
       { name: 'HEAD', type: 'head' },
       { name: 'feat/akr/magic-link-teams', type: 'local-branch' },
       { name: 'origin/feat/akr/magic-link-teams', type: 'remote-branch' },
     ]
     const result = mergeRefs(refs, 'var(--lane-0)', [], REMOTES)
-    expect(result).toHaveLength(2)
-    expect(result[0].kind).toBe('head')
-    expect(result[1].kind).toBe('merged')
+    expect(result).toHaveLength(1)
+    expect(result[0].kind).toBe('merged')
+    expect(result[0].name).toBe('feat/akr/magic-link-teams')
   })
 
   it('shows remote-only branch when no local exists', () => {
@@ -116,23 +116,33 @@ describe('mergeRefs - deduplication', () => {
       { name: 'upstream/main', type: 'remote-branch' },
     ]
     const result = mergeRefs(refs, 'var(--lane-0)', [], REMOTES)
-    const branchLabels = result.filter((b) => b.kind !== 'head')
-    expect(branchLabels).toHaveLength(1)
-    expect(branchLabels[0].kind).toBe('merged')
-    expect(branchLabels[0].name).toBe('main')
-    expect(branchLabels[0].remoteName).toBe('upstream')
+    expect(result).toHaveLength(1)
+    expect(result[0].kind).toBe('merged')
+    expect(result[0].name).toBe('main')
+    expect(result[0].remoteName).toBe('upstream')
   })
 
-  it('handles tags correctly without dedup issues', () => {
+  it('omits tags from branch labels', () => {
     const refs: RefInfo[] = [
       { name: 'main', type: 'local-branch' },
       { name: 'origin/main', type: 'remote-branch' },
       { name: 'v2.1.0', type: 'tag' },
     ]
     const result = mergeRefs(refs, 'var(--lane-0)', [], REMOTES)
-    expect(result).toHaveLength(2)
+    expect(result).toHaveLength(1)
     expect(result[0].kind).toBe('merged')
-    expect(result[1].kind).toBe('tag')
-    expect(result[1].name).toBe('v2.1.0')
+    expect(result[0].name).toBe('main')
+  })
+
+  it('omits origin/HEAD and deduplicates with local branch', () => {
+    const refs: RefInfo[] = [
+      { name: 'main', type: 'local-branch' },
+      { name: 'origin/main', type: 'remote-branch' },
+      { name: 'origin/HEAD', type: 'remote-branch' },
+    ]
+    const result = mergeRefs(refs, 'var(--lane-0)', [], REMOTES)
+    expect(result).toHaveLength(1)
+    expect(result[0].kind).toBe('merged')
+    expect(result[0].name).toBe('main')
   })
 })

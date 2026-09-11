@@ -13,29 +13,30 @@ export function mergeRefs(
 
   const currentBranch = branchInfos.find((b) => b.current)
 
-  const headRef = rawRefs.find((r) => r.type === 'head')
-  if (headRef) {
-    result.push({
-      kind: 'head',
-      name: 'HEAD',
-      isActive: true,
-      laneColor: 'var(--accent-primary)',
-    })
-  }
-
   const localBranches = rawRefs.filter((r) => r.type === 'local-branch')
-  const remoteBranches = rawRefs.filter((r) => r.type === 'remote-branch')
+  const remoteBranches = rawRefs.filter((r) => {
+    if (r.type !== 'remote-branch') return false
+    const { shortName } = stripRemotePrefix(r.name, remoteNames)
+    return shortName !== 'HEAD' && !r.name.endsWith('/HEAD')
+  })
+
+  const seenNames = new Set<string>()
 
   for (const local of localBranches) {
     const shortName = local.name
-    const matchingRemote = remoteBranches.find((r) => {
+    if (!shortName || shortName === 'HEAD' || seenNames.has(shortName)) continue
+    seenNames.add(shortName)
+
+    const matchingRemotes = remoteBranches.filter((r) => {
       const { shortName: remoteShort } = stripRemotePrefix(r.name, remoteNames)
       return remoteShort === shortName
     })
 
-    if (matchingRemote) {
-      consumedRemotes.add(matchingRemote.name)
-      const { remoteName } = stripRemotePrefix(matchingRemote.name, remoteNames)
+    if (matchingRemotes.length > 0) {
+      for (const mr of matchingRemotes) {
+        consumedRemotes.add(mr.name)
+      }
+      const { remoteName } = stripRemotePrefix(matchingRemotes[0].name, remoteNames)
 
       const info = branchInfos.find((b) => b.name === shortName)
       const syncStatus = computeSyncFromInfo(info)
@@ -61,21 +62,15 @@ export function mergeRefs(
   for (const remote of remoteBranches) {
     if (consumedRemotes.has(remote.name)) continue
     const { shortName, remoteName } = stripRemotePrefix(remote.name, remoteNames)
+    if (!shortName || shortName === 'HEAD' || seenNames.has(shortName)) continue
+    seenNames.add(shortName)
+
     result.push({
       kind: 'remote',
       name: shortName,
       remoteName: remoteName ?? undefined,
       isActive: false,
       laneColor,
-    })
-  }
-
-  for (const ref of rawRefs.filter((r) => r.type === 'tag')) {
-    result.push({
-      kind: 'tag',
-      name: ref.name,
-      isActive: false,
-      laneColor: 'var(--color-warning)',
     })
   }
 

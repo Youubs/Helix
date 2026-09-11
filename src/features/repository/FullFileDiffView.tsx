@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { X, ArrowLeft, FileCode, Columns, AlignJustify } from 'lucide-react'
 import { useUiStore } from '@/stores/uiStore'
 import { parseSingleFileDiff, parseDiff } from '@/utils/diffParser'
+import { detectLanguage } from '@/utils/languageDetector'
+import { HighlightedLine } from '@/components/diff/HighlightedLine'
 import type { DiffHunk, DiffLine } from '@/shared/types'
 
 interface SplitCell {
@@ -155,6 +157,11 @@ export function FullFileDiffView() {
       ? selectedFileDiff.file.slice(0, selectedFileDiff.file.length - fileName.length)
       : ''
 
+  const detectedLang = useMemo(
+    () => detectLanguage(selectedFileDiff.file),
+    [selectedFileDiff.file]
+  )
+
   return (
     <div className="h-full flex flex-col bg-[var(--bg-app)]">
       {/* Header bar */}
@@ -177,6 +184,11 @@ export function FullFileDiffView() {
               {dirPath}
             </span>
           )}
+
+          {/* Programming language badge */}
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-secondary)]">
+            {detectedLang.name}
+          </span>
 
           {/* Additions & Deletions metrics badges */}
           <div className="flex items-center gap-1.5 ml-2 font-mono text-[11px]">
@@ -246,9 +258,9 @@ export function FullFileDiffView() {
           </div>
         ) : diffMode === 'split' ? (
           /* Split / Side-by-Side View */
-          <div className="min-w-full w-max">
+          <div className="w-full">
             {hunks.map((hunk, i) => (
-              <SplitHunkView key={i} hunk={hunk} />
+              <SplitHunkView key={i} hunk={hunk} languageId={detectedLang.id} />
             ))}
           </div>
         ) : (
@@ -260,7 +272,7 @@ export function FullFileDiffView() {
                   {hunk.header}
                 </div>
                 {(hunk.lines || []).map((line, j) => (
-                  <UnifiedDiffLineView key={j} line={line} />
+                  <UnifiedDiffLineView key={j} line={line} languageId={detectedLang.id} />
                 ))}
               </div>
             ))}
@@ -271,27 +283,27 @@ export function FullFileDiffView() {
   )
 }
 
-function SplitHunkView({ hunk }: { hunk: DiffHunk }) {
+function SplitHunkView({ hunk, languageId }: { hunk: DiffHunk; languageId?: string }) {
   const splitRows = useMemo(() => buildSplitRows(hunk.lines || []), [hunk.lines])
 
   return (
-    <div className="border-b border-[var(--border-default)]/40">
+    <div className="border-b border-[var(--border-default)]/40 w-full">
       {/* Header bar */}
-      <div className="flex items-center px-4 py-1 bg-[var(--bg-elevated)] text-[var(--text-tertiary)] border-y border-[var(--border-default)]/60 text-[11px] sticky top-0 z-10 font-bold">
-        <div className="w-1/2 pr-2 border-r border-[var(--border-default)]/50">
+      <div className="grid grid-cols-2 w-full px-4 py-1 bg-[var(--bg-elevated)] text-[var(--text-tertiary)] border-y border-[var(--border-default)]/60 text-[11px] sticky top-0 z-10 font-bold">
+        <div className="min-w-0 pr-2 border-r border-[var(--border-default)]/50 truncate">
           <span>Old version &mdash; {hunk.header}</span>
         </div>
-        <div className="w-1/2 pl-4">
+        <div className="min-w-0 pl-4 truncate">
           <span>New version &mdash; {hunk.header}</span>
         </div>
       </div>
 
       {/* Split Rows */}
       {splitRows.map((row, i) => (
-        <div key={i} className="flex border-b border-[var(--border-default)]/20 leading-5 text-xs">
+        <div key={i} className="grid grid-cols-2 w-full border-b border-[var(--border-default)]/20 leading-5 text-xs">
           {/* Left Column: Old Version */}
           <div
-            className={`w-1/2 flex items-stretch border-r border-[var(--border-default)]/40 overflow-hidden ${
+            className={`min-w-0 flex items-stretch border-r border-[var(--border-default)]/40 overflow-hidden ${
               row.left?.type === 'remove'
                 ? 'bg-[var(--diff-del-bg)]'
                 : row.left
@@ -310,19 +322,23 @@ function SplitHunkView({ hunk }: { hunk: DiffHunk }) {
               {row.left?.type === 'remove' ? '-' : ' '}
             </span>
             <span
-              className={`flex-1 whitespace-pre pl-1 py-0.5 ${
+              className={`flex-1 min-w-0 whitespace-pre pl-1 py-0.5 overflow-x-auto ${
                 row.left?.type === 'remove'
                   ? 'text-[var(--diff-del-text)] font-medium'
                   : 'text-[var(--text-primary)]'
               }`}
             >
-              {row.left?.content || ''}
+              {row.left?.content ? (
+                <HighlightedLine content={row.left.content} languageId={languageId} />
+              ) : (
+                ''
+              )}
             </span>
           </div>
 
           {/* Right Column: New Version */}
           <div
-            className={`w-1/2 flex items-stretch overflow-hidden ${
+            className={`min-w-0 flex items-stretch overflow-hidden ${
               row.right?.type === 'add'
                 ? 'bg-[var(--diff-add-bg)]'
                 : row.right
@@ -341,13 +357,17 @@ function SplitHunkView({ hunk }: { hunk: DiffHunk }) {
               {row.right?.type === 'add' ? '+' : ' '}
             </span>
             <span
-              className={`flex-1 whitespace-pre pl-1 py-0.5 ${
+              className={`flex-1 min-w-0 whitespace-pre pl-1 py-0.5 overflow-x-auto ${
                 row.right?.type === 'add'
                   ? 'text-[var(--diff-add-text)] font-medium'
                   : 'text-[var(--text-primary)]'
               }`}
             >
-              {row.right?.content || ''}
+              {row.right?.content ? (
+                <HighlightedLine content={row.right.content} languageId={languageId} />
+              ) : (
+                ''
+              )}
             </span>
           </div>
         </div>
@@ -356,7 +376,7 @@ function SplitHunkView({ hunk }: { hunk: DiffHunk }) {
   )
 }
 
-function UnifiedDiffLineView({ line }: { line: DiffLine }) {
+function UnifiedDiffLineView({ line, languageId }: { line: DiffLine; languageId?: string }) {
   if (!line) return null
 
   const bgClass =
@@ -387,7 +407,11 @@ function UnifiedDiffLineView({ line }: { line: DiffLine }) {
         {prefix}
       </span>
       <span className={`flex-1 whitespace-pre pl-2 py-0.5 font-mono ${textClass}`}>
-        {line.content || ''}
+        {line.content ? (
+          <HighlightedLine content={line.content} languageId={languageId} />
+        ) : (
+          ''
+        )}
       </span>
     </div>
   )
