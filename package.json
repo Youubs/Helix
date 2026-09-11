@@ -4,15 +4,19 @@
   "description": "A modern Git desktop client",
   "author": "Helix",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Youubs/Helix.git"
+  },
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "package": "electron-builder",
-    "package:win": "electron-builder --win",
-    "package:mac": "electron-builder --mac",
-    "package:linux": "electron-builder --linux",
+    "package": "electron-builder --publish never",
+    "package:win": "electron-builder --win --publish never",
+    "package:mac": "electron-builder --mac --publish never",
+    "package:linux": "electron-builder --linux --publish never",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
