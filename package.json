@@ -2,6 +2,7 @@
   "name": "helix",
   "version": "1.0.0",
   "description": "A modern Git desktop client",
+  "author": "Helix",
   "license": "MIT",
   "main": "./out/main/index.js",
   "scripts": {
@@ -73,7 +74,7 @@
         "portable"
       ],
       "icon": "assets/icons/icon.ico",
-      "requestedExecutionLevel": "asUser",
+      "requestedExecutionLevel": "asInvoker",
       "artifactName": "Helix-Setup-${version}.${ext}"
     },
     "nsis": {
