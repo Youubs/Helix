@@ -4,6 +4,7 @@ import { Titlebar } from '@/components/layout/Titlebar'
 import { StatusBar } from '@/components/layout/StatusBar'
 import { ResizableLayout } from '@/components/layout/ResizableLayout'
 import { CommitPanel } from '@/features/repository/CommitPanel'
+import { CommitDetail } from '@/features/repository/CommitDetail'
 import { WorkingTree } from '@/features/repository/WorkingTree'
 import { Toolbar } from '@/features/repository/Toolbar'
 import { RepoTabs } from '@/features/repository/RepoTabs'
@@ -22,6 +23,9 @@ export default function App() {
   const detailWidth = useUiStore((s) => s.detailWidth)
   const setDetailWidth = useUiStore((s) => s.setDetailWidth)
   const selectedFileDiff = useUiStore((s) => s.selectedFileDiff)
+  const selectedCommitHash = useUiStore((s) => s.selectedCommitHash)
+
+  const isCommitSelected = Boolean(selectedCommitHash && selectedCommitHash !== 'WORKING_TREE')
 
   useWatcher()
   useGlobalShortcuts()
@@ -58,7 +62,7 @@ export default function App() {
                 }
                 right={
                   <ErrorBoundary>
-                    <WorkingTree />
+                    {isCommitSelected ? <CommitDetail /> : <WorkingTree />}
                   </ErrorBoundary>
                 }
                 leftWidth={0}

@@ -1,23 +1,32 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import {
-  ChevronDown,
-  ChevronRight,
-  Sparkles,
   GitCommit,
   FolderTree,
-  List
+  List,
+  ArrowLeft,
+  Copy,
+  X,
+  Search,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Folder
 } from 'lucide-react'
 import { useGitStore } from '@/stores/gitStore'
 import { useUiStore } from '@/stores/uiStore'
 import { parseDiff } from '@/utils/diffParser'
-import type { DiffFile, DiffHunk, DiffLine } from '@/shared/types'
+import type { DiffFile } from '@/shared/types'
+import { toast } from 'sonner'
 
 export function CommitDetail() {
   const commits = useGitStore((s) => s.commits)
   const selectedHash = useUiStore((s) => s.selectedCommitHash)
+  const setSelectedCommit = useUiStore((s) => s.setSelectedCommit)
   const [diffFiles, setDiffFiles] = useState<DiffFile[]>([])
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'path' | 'tree'>('path')
+  const [searchFilter, setSearchFilter] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const commit = commits.find((c) => c.hash === selectedHash)
 
@@ -50,12 +59,16 @@ export function CommitDetail() {
     }
   }, [selectedHash])
 
-  if (!commit) {
-    return (
-      <div className="h-full flex items-center justify-center text-xs text-[var(--text-tertiary)]">
-        Select a commit to view details
-      </div>
-    )
+  const handleCopyHash = () => {
+    if (!commit?.hash) return
+    navigator.clipboard.writeText(commit.hash)
+    setCopied(true)
+    toast.success('Commit hash copied to clipboard')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleBackToWorkingTree = () => {
+    setSelectedCommit('WORKING_TREE')
   }
 
   const stats = useMemo(() => {
@@ -65,8 +78,28 @@ export function CommitDetail() {
       else if (f.status === 'deleted') deleted++
       else modified++
     }
-    return { modified, added, deleted }
+    return { modified, added, deleted, total: diffFiles.length }
   }, [diffFiles])
+
+  const filteredFiles = useMemo(() => {
+    if (!searchFilter.trim()) return diffFiles
+    const q = searchFilter.toLowerCase()
+    return diffFiles.filter((f) => f.file?.toLowerCase().includes(q))
+  }, [diffFiles, searchFilter])
+
+  if (!commit) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-xs text-[var(--text-tertiary)] p-4">
+        <p>No commit selected</p>
+        <button
+          onClick={handleBackToWorkingTree}
+          className="mt-2 text-xs text-[var(--accent-primary)] hover:underline"
+        >
+          Return to Working Tree
+        </button>
+      </div>
+    )
+  }
 
   const authorName = commit.authorName || 'Unknown Author'
   const parentHash = commit.parents?.[0] || null
@@ -74,213 +107,352 @@ export function CommitDetail() {
   const initials = getInitials(authorName)
 
   return (
-    <div className="h-full flex flex-col bg-[var(--bg-surface)] overflow-y-auto">
-      {/* Header: commit ID + AI button */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-default)]">
-        <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)] font-mono">
-          <GitCommit size={11} className="text-[var(--text-tertiary)]" />
-          <span>commit:</span>
-          <span className="text-[var(--text-primary)]">{commit.abbreviatedHash || commit.hash?.slice(0, 7)}</span>
-        </div>
-        <button className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-indigo-300 bg-[rgba(99,102,241,0.18)] hover:bg-[rgba(99,102,241,0.28)] transition-colors">
-          <Sparkles size={10} />
-          AI
-        </button>
-      </div>
-
-      {/* Commit description */}
-      <div className="px-3 pt-3 pb-1">
-        <p className="text-[15px] font-medium text-[var(--text-primary)] leading-tight">
-          {commit.message || '(No commit message)'}
-        </p>
-        {commit.body && (
-          <p className="mt-1.5 text-[11px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
-            {commit.body}
-          </p>
-        )}
-      </div>
-
-      {/* Author section */}
-      <div className="flex items-start gap-2.5 px-3 py-2.5">
-        <div
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-          style={{ background: stringToColor(authorName) }}
+    <div className="h-full flex flex-col bg-[var(--bg-surface)] overflow-hidden select-none">
+      {/* Top navigation header (GitKraken-style) */}
+      <div className="h-10 flex items-center justify-between px-3 border-b border-[var(--border-default)] bg-[var(--bg-app)] shrink-0">
+        <button
+          onClick={handleBackToWorkingTree}
+          className="flex items-center gap-1.5 px-2 py-1 -ml-1 rounded text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+          title="Return to Working Tree (uncommitted changes & staging)"
         >
-          {initials}
+          <ArrowLeft size={13} />
+          <span>Working Tree</span>
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleCopyHash}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+            title="Copy full commit SHA"
+          >
+            <GitCommit size={11} className="text-[var(--accent-primary)]" />
+            <span>{commit.abbreviatedHash || commit.hash?.slice(0, 7)}</span>
+            {copied ? <Check size={10} className="text-emerald-400 ml-0.5" /> : <Copy size={10} className="ml-0.5 opacity-60" />}
+          </button>
+
+          <button
+            onClick={handleBackToWorkingTree}
+            className="p-1 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+            title="Close commit details"
+          >
+            <X size={14} />
+          </button>
         </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-[12px] font-semibold text-[var(--text-primary)] truncate">
-            {authorName}
-          </span>
-          <span className="text-[11px] text-[var(--text-secondary)]">
-            authored {timeAgo}
-          </span>
-          {parentHash && (
-            <span className="text-[11px] text-[var(--text-tertiary)] mt-0.5 font-mono">
-              parent{' '}
-              <span className="text-[var(--accent-primary)] cursor-pointer hover:underline">
-                {parentHash.slice(0, 7)}
-              </span>
-            </span>
+      </div>
+
+      {/* Scrollable commit summary */}
+      <div className="flex flex-col border-b border-[var(--border-default)] shrink-0 bg-[var(--bg-surface)]">
+        {/* Commit message */}
+        <div className="px-3 pt-3 pb-1">
+          <p className="text-[13px] font-semibold text-[var(--text-primary)] leading-snug break-words">
+            {commit.message || '(No commit message)'}
+          </p>
+          {commit.body && (
+            <p className="mt-1 text-[11px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed max-h-24 overflow-y-auto font-mono">
+              {commit.body}
+            </p>
           )}
         </div>
+
+        {/* Author details */}
+        <div className="flex items-center gap-2.5 px-3 py-2">
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm"
+            style={{ background: stringToColor(authorName) }}
+          >
+            {initials}
+          </div>
+          <div className="flex flex-col min-w-0 flex-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[12px] font-medium text-[var(--text-primary)] truncate">
+                {authorName}
+              </span>
+              <span className="text-[10px] text-[var(--text-tertiary)] shrink-0">
+                {timeAgo}
+              </span>
+            </div>
+            {parentHash && (
+              <span className="text-[10px] text-[var(--text-tertiary)] font-mono">
+                parent:{' '}
+                <span
+                  onClick={() => setSelectedCommit(parentHash)}
+                  className="text-[var(--accent-primary)] cursor-pointer hover:underline"
+                  title="View parent commit"
+                >
+                  {parentHash.slice(0, 7)}
+                </span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* File statistics summary */}
+        <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border-default)] bg-[var(--bg-app)]/50 text-[11px]">
+          <span className="text-[var(--text-secondary)] font-medium">
+            {stats.total} file{stats.total === 1 ? '' : 's'} changed
+          </span>
+          <div className="flex items-center gap-2 font-mono text-[10px]">
+            {stats.added > 0 && (
+              <span className="text-emerald-400">+{stats.added}</span>
+            )}
+            {stats.modified > 0 && (
+              <span className="text-amber-400">~{stats.modified}</span>
+            )}
+            {stats.deleted > 0 && (
+              <span className="text-rose-400">-{stats.deleted}</span>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* File stats bar */}
-      <div className="flex items-center gap-3 px-3 py-2 border-t border-b border-[var(--border-default)] text-[11px]">
-        {stats.modified > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-warning)]" />
-            <span className="text-[var(--text-secondary)]">{stats.modified} modified</span>
-          </span>
-        )}
-        {stats.added > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[var(--diff-add-text)]" />
-            <span className="text-[var(--text-secondary)]">{stats.added} added</span>
-          </span>
-        )}
-        {stats.deleted > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[var(--diff-del-text)]" />
-            <span className="text-[var(--text-secondary)]">{stats.deleted} deleted</span>
-          </span>
-        )}
+      {/* Files toolbar: filter input & view mode toggle */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-default)] bg-[var(--bg-surface)] shrink-0">
+        <div className="relative flex-1 flex items-center">
+          <Search size={12} className="absolute left-2 text-[var(--text-tertiary)] pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Filter files..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            className="w-full bg-[var(--bg-app)] text-[var(--text-primary)] pl-7 pr-2 py-1 rounded text-xs border border-[var(--border-default)] focus:outline-none focus:border-[var(--accent-primary)] placeholder:text-[var(--text-tertiary)]"
+          />
+          {searchFilter && (
+            <button
+              onClick={() => setSearchFilter('')}
+              className="absolute right-2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+            >
+              <X size={11} />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center border border-[var(--border-default)] rounded overflow-hidden">
+          <button
+            onClick={() => setViewMode('path')}
+            className={`px-1.5 py-1 text-[10px] transition-colors ${
+              viewMode === 'path'
+                ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] font-medium'
+                : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+            }`}
+            title="List view"
+          >
+            <List size={12} />
+          </button>
+          <button
+            onClick={() => setViewMode('tree')}
+            className={`px-1.5 py-1 text-[10px] transition-colors ${
+              viewMode === 'tree'
+                ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] font-medium'
+                : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+            }`}
+            title="Tree view"
+          >
+            <FolderTree size={12} />
+          </button>
+        </div>
       </div>
 
-      {/* View toggle */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[var(--border-default)]">
-        <button
-          onClick={() => setViewMode('path')}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-            viewMode === 'path'
-              ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
-              : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-          }`}
-        >
-          <List size={10} />
-          Path
-        </button>
-        <button
-          onClick={() => setViewMode('tree')}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-            viewMode === 'tree'
-              ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
-              : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-          }`}
-        >
-          <FolderTree size={10} />
-          Tree
-        </button>
+      {/* Modified files list / tree */}
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="p-4 text-xs text-[var(--text-tertiary)] text-center">Loading changed files...</div>
+        ) : filteredFiles.length === 0 ? (
+          <div className="p-4 text-xs text-[var(--text-tertiary)] text-center">
+            {searchFilter ? 'No files match filter' : 'No files modified in this commit'}
+          </div>
+        ) : viewMode === 'path' ? (
+          <div className="py-0.5 divide-y divide-[var(--border-default)]/40">
+            {filteredFiles.map((file, i) => (
+              <CommitFileRow key={file.file || i} file={file} commitHash={selectedHash} />
+            ))}
+          </div>
+        ) : (
+          <div className="py-1">
+            <CommitFileTree files={filteredFiles} commitHash={selectedHash} />
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
 
-      {/* File list */}
-      {loading ? (
-        <div className="p-4 text-[11px] text-[var(--text-tertiary)]">Loading diff...</div>
-      ) : diffFiles.length === 0 ? (
-        <div className="p-4 text-[11px] text-[var(--text-tertiary)]">No files modified in this commit</div>
-      ) : (
-        <div className="flex-1">
-          {diffFiles.map((file, i) => (
-            <DiffFileView key={file.file || i} file={file} />
-          ))}
+function CommitFileRow({ file, commitHash }: { file: DiffFile; commitHash: string | null }) {
+  const selectedFileDiff = useUiStore((s) => s.selectedFileDiff)
+  const setSelectedFileDiff = useUiStore((s) => s.setSelectedFileDiff)
+
+  const fileName = file.file || 'Unknown file'
+  const isSelected = selectedFileDiff?.file === file.file && selectedFileDiff?.commitHash === commitHash
+
+  const handleSelect = () => {
+    setSelectedFileDiff({
+      file: file.file,
+      commitHash: commitHash
+    })
+  }
+
+  // GitKraken-like status badges
+  let statusBadge = { letter: 'M', className: 'text-amber-400 bg-amber-500/15 border-amber-500/30' }
+  if (file.status === 'added') {
+    statusBadge = { letter: 'A', className: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30' }
+  } else if (file.status === 'deleted') {
+    statusBadge = { letter: 'D', className: 'text-rose-400 bg-rose-500/15 border-rose-500/30' }
+  } else if (file.status === 'renamed') {
+    statusBadge = { letter: 'R', className: 'text-purple-400 bg-purple-500/15 border-purple-500/30' }
+  }
+
+  const additions = file.additions ?? 0
+  const deletions = file.deletions ?? 0
+
+  return (
+    <div
+      onClick={handleSelect}
+      className={`flex items-center gap-2 px-3 py-2 text-xs cursor-pointer select-none transition-colors ${
+        isSelected
+          ? 'bg-[var(--bg-selection)] text-white'
+          : 'hover:bg-[var(--bg-hover)] text-[var(--text-primary)]'
+      }`}
+      title={`Click to view diff of ${fileName}`}
+    >
+      <span
+        className={`w-4 h-4 flex items-center justify-center rounded text-[9px] font-bold border shrink-0 ${statusBadge.className}`}
+      >
+        {statusBadge.letter}
+      </span>
+
+      <span className="flex-1 truncate font-mono text-[11px]">
+        {fileName}
+      </span>
+
+      {(additions > 0 || deletions > 0) && (
+        <div className="flex items-center gap-1.5 text-[10px] font-mono tabular-nums shrink-0">
+          {additions > 0 && <span className="text-emerald-400">+{additions}</span>}
+          {deletions > 0 && <span className="text-rose-400">-{deletions}</span>}
         </div>
       )}
     </div>
   )
 }
 
-const DiffFileView = React.memo(function DiffFileView({ file }: { file?: DiffFile }) {
-  const selectedFileDiff = useUiStore((s) => s.selectedFileDiff)
-  const setSelectedFileDiff = useUiStore((s) => s.setSelectedFileDiff)
-  const selectedHash = useUiStore((s) => s.selectedCommitHash)
+interface TreeNode {
+  name: string
+  path: string
+  isFile: boolean
+  file?: DiffFile
+  children?: Record<string, TreeNode>
+}
 
-  if (!file) return null
-
-  const fileName = file.file || 'Unknown File'
-  const additions = file.additions ?? 0
-  const deletions = file.deletions ?? 0
-  const isSelected = selectedFileDiff?.file === file.file
-
-  const handleFileClick = () => {
-    setSelectedFileDiff({
-      file: file.file,
-      commitHash: selectedHash
-    })
-  }
-
-  const statusColor =
-    file.status === 'added'
-      ? 'bg-[var(--diff-add-text)]'
-      : file.status === 'deleted'
-        ? 'bg-[var(--diff-del-text)]'
-        : 'bg-[var(--color-warning)]'
-
-  return (
-    <div
-      onClick={handleFileClick}
-      className={`flex items-center gap-2 px-3 py-1.5 text-[11px] border-b border-[var(--border-default)] cursor-pointer select-none transition-colors ${
-        isSelected
-          ? 'bg-[var(--bg-selection)] text-white font-semibold'
-          : 'hover:bg-[var(--bg-hover)] text-[var(--text-primary)]'
-      }`}
-      title="Click to view diff in center panel"
-    >
-      <span className={`w-2 h-2 rounded-sm shrink-0 ${statusColor}`} />
-      <span className="flex-1 text-left truncate font-mono">
-        {fileName}
-      </span>
-      <span className="text-[var(--diff-add-text)] tabular-nums">+{additions}</span>
-      <span className="text-[var(--diff-del-text)] tabular-nums">-{deletions}</span>
-    </div>
-  )
-})
-
-function HunkView({ hunk }: { hunk?: DiffHunk }) {
-  if (!hunk) return null
-  const lines = hunk.lines || []
+function CommitFileTree({ files, commitHash }: { files: DiffFile[]; commitHash: string | null }) {
+  const tree = useMemo(() => {
+    const root: Record<string, TreeNode> = {}
+    for (const f of files) {
+      const parts = (f.file || '').split(/[/\\]/)
+      let current = root
+      let currentPath = ''
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+        currentPath = currentPath ? `${currentPath}/${part}` : part
+        const isFile = i === parts.length - 1
+        if (!current[part]) {
+          current[part] = {
+            name: part,
+            path: currentPath,
+            isFile,
+            file: isFile ? f : undefined,
+            children: isFile ? undefined : {}
+          }
+        }
+        if (!isFile) {
+          current = current[part].children!
+        }
+      }
+    }
+    return root
+  }, [files])
 
   return (
-    <div className="font-mono text-[11px]">
-      <div className="px-3 py-0.5 bg-[var(--bg-elevated)] text-[var(--text-tertiary)] border-y border-[var(--border-default)]/50">
-        {hunk.header || ''}
-      </div>
-      {lines.map((line, i) => (
-        <DiffLineView key={i} line={line} />
+    <div className="text-xs">
+      {Object.values(tree).map((node) => (
+        <TreeNodeItem key={node.path} node={node} level={0} commitHash={commitHash} />
       ))}
     </div>
   )
 }
 
-function DiffLineView({ line }: { line?: DiffLine }) {
-  if (!line) return null
+function TreeNodeItem({
+  node,
+  level,
+  commitHash
+}: {
+  node: TreeNode
+  level: number
+  commitHash: string | null
+}) {
+  const [open, setOpen] = useState(true)
+  const selectedFileDiff = useUiStore((s) => s.selectedFileDiff)
+  const setSelectedFileDiff = useUiStore((s) => s.setSelectedFileDiff)
 
-  const bgClass =
-    line.type === 'add'
-      ? 'bg-[var(--diff-add-bg)]'
-      : line.type === 'remove'
-        ? 'bg-[var(--diff-del-bg)]'
-        : ''
+  if (!node.isFile) {
+    return (
+      <div>
+        <div
+          onClick={() => setOpen(!open)}
+          style={{ paddingLeft: `${level * 14 + 10}px` }}
+          className="flex items-center gap-1.5 py-1 text-[11px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] cursor-pointer select-none font-mono"
+        >
+          {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          <Folder size={12} className="text-[var(--accent-primary)] opacity-80" />
+          <span className="font-semibold">{node.name}</span>
+        </div>
+        {open && node.children && (
+          <div>
+            {Object.values(node.children).map((child) => (
+              <TreeNodeItem key={child.path} node={child} level={level + 1} commitHash={commitHash} />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
-  const textClass =
-    line.type === 'add'
-      ? 'text-[var(--diff-add-text)]'
-      : line.type === 'remove'
-        ? 'text-[var(--diff-del-text)]'
-        : 'text-[var(--text-primary)]'
+  const file = node.file
+  if (!file) return null
 
-  const prefix = line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' '
+  const isSelected = selectedFileDiff?.file === file.file && selectedFileDiff?.commitHash === commitHash
+  const additions = file.additions ?? 0
+  const deletions = file.deletions ?? 0
+
+  let statusLetter = 'M'
+  let statusColor = 'text-amber-400 bg-amber-500/15 border-amber-500/30'
+  if (file.status === 'added') {
+    statusLetter = 'A'
+    statusColor = 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30'
+  } else if (file.status === 'deleted') {
+    statusLetter = 'D'
+    statusColor = 'text-rose-400 bg-rose-500/15 border-rose-500/30'
+  }
 
   return (
-    <div className={`flex ${bgClass} hover:brightness-110`}>
-      <span className="w-10 shrink-0 text-right pr-2 text-[var(--text-tertiary)] select-none">
-        {line.oldLineNumber || ''}
+    <div
+      onClick={() => setSelectedFileDiff({ file: file.file, commitHash })}
+      style={{ paddingLeft: `${level * 14 + 18}px` }}
+      className={`flex items-center gap-2 pr-3 py-1 text-[11px] font-mono cursor-pointer select-none transition-colors ${
+        isSelected
+          ? 'bg-[var(--bg-selection)] text-white'
+          : 'hover:bg-[var(--bg-hover)] text-[var(--text-primary)]'
+      }`}
+    >
+      <span
+        className={`w-3.5 h-3.5 flex items-center justify-center rounded text-[8px] font-bold border shrink-0 ${statusColor}`}
+      >
+        {statusLetter}
       </span>
-      <span className="w-10 shrink-0 text-right pr-2 text-[var(--text-tertiary)] select-none">
-        {line.newLineNumber || ''}
-      </span>
-      <span className={`w-4 shrink-0 text-center select-none ${textClass}`}>{prefix}</span>
-      <span className={`flex-1 whitespace-pre ${textClass}`}>{line.content || ''}</span>
+      <span className="flex-1 truncate">{node.name}</span>
+      {(additions > 0 || deletions > 0) && (
+        <div className="flex items-center gap-1 text-[10px] tabular-nums shrink-0">
+          {additions > 0 && <span className="text-emerald-400">+{additions}</span>}
+          {deletions > 0 && <span className="text-rose-400">-{deletions}</span>}
+        </div>
+      )}
     </div>
   )
 }
@@ -294,15 +466,15 @@ function formatRelativeTime(dateStr?: string | null): string {
 
   if (seconds < 60) return 'just now'
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
+  if (minutes < 60) return `${minutes}m ago`
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+  if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
-  if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`
+  if (days < 30) return `${days}d ago`
   const months = Math.floor(days / 30)
-  if (months < 12) return `${months} month${months > 1 ? 's' : ''} ago`
+  if (months < 12) return `${months}mo ago`
   const years = Math.floor(months / 12)
-  return `${years} year${years > 1 ? 's' : ''} ago`
+  return `${years}y ago`
 }
 
 function getInitials(name?: string | null): string {
