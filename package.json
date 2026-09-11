@@ -74,7 +74,6 @@
         "nsis",
         "portable"
       ],
-      "icon": "assets/icons/icon.ico",
       "requestedExecutionLevel": "asInvoker",
       "artifactName": "Helix-Setup-${version}.${ext}"
     },
@@ -88,14 +87,12 @@
       "target": [
         "dmg"
       ],
-      "icon": "assets/icons/icon.icns",
       "category": "public.app-category.developer-tools"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "icon": "assets/icons",
       "category": "Development"
     }
   }

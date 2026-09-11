@@ -303,11 +303,11 @@ export function WorkingTree() {
         </div>
       </div>
 
-      {/* ── Scrollable files lists ── */}
-      <div className="flex-1 overflow-y-auto min-h-0 divide-y divide-zinc-800/40">
-        {/* Unstaged Files Accordion */}
-        <div className="py-1">
-          <div className="flex items-center justify-between px-3 py-1">
+      {/* ── 3-Section Equal Height Container (Unstaged, Staged, Commit) ── */}
+      <div className="flex-1 min-h-0 grid grid-rows-3 overflow-hidden">
+        {/* Row 1: Unstaged Files */}
+        <div className="flex flex-col min-h-0 border-b border-zinc-800 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 shrink-0 bg-[#161b22]">
             <button
               onClick={() => setUnstagedOpen(!unstagedOpen)}
               className="flex items-center gap-1 text-xs font-semibold text-zinc-300 hover:text-white"
@@ -327,9 +327,9 @@ export function WorkingTree() {
           </div>
 
           {unstagedOpen && (
-            <div className="mt-0.5">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               {unstagedFiles.length === 0 ? (
-                <div className="px-6 py-1.5 text-[11px] text-zinc-500 italic">No unstaged files</div>
+                <div className="px-6 py-2 text-[11px] text-zinc-500 italic">No unstaged files</div>
               ) : viewMode === 'path' ? (
                 unstagedFiles.map((file) => (
                   <GitKrakenFileRow
@@ -357,9 +357,9 @@ export function WorkingTree() {
           )}
         </div>
 
-        {/* Staged Files Accordion */}
-        <div className="py-1">
-          <div className="flex items-center justify-between px-3 py-1">
+        {/* Row 2: Staged Files */}
+        <div className="flex flex-col min-h-0 border-b border-zinc-800 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 shrink-0 bg-[#161b22]">
             <button
               onClick={() => setStagedOpen(!stagedOpen)}
               className="flex items-center gap-1 text-xs font-semibold text-zinc-300 hover:text-white"
@@ -379,9 +379,9 @@ export function WorkingTree() {
           </div>
 
           {stagedOpen && (
-            <div className="mt-0.5">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               {stagedFiles.length === 0 ? (
-                <div className="px-6 py-1.5 text-[11px] text-zinc-500 italic">No staged files</div>
+                <div className="px-6 py-2 text-[11px] text-zinc-500 italic">No staged files</div>
               ) : viewMode === 'path' ? (
                 stagedFiles.map((file) => (
                   <GitKrakenFileRow
@@ -408,162 +408,165 @@ export function WorkingTree() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* ── Center divider handle ── */}
-      <div className="w-10 h-1 bg-zinc-700/60 rounded-full mx-auto my-1 shrink-0" />
+        {/* Row 3: GitKraken Commit Area */}
+        <div className="flex flex-col min-h-0 p-3 bg-[#161b22] overflow-hidden">
+          {/* Top handle divider */}
+          <div className="w-10 h-1 bg-zinc-700/60 rounded-full mx-auto mb-2 shrink-0" />
 
-      {/* ── GitKraken Commit Area ── */}
-      <div className="p-3 border-t border-zinc-800 bg-[#161b22] shrink-0 flex flex-col gap-2.5">
-        {/* Tab switcher: Commit, Stash, Cloud */}
-        <div className="flex items-center gap-1 border-b border-zinc-800 pb-0">
-          <button
-            onClick={() => setActiveTab('commit')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t font-medium text-xs border-t border-x transition-colors ${
-              activeTab === 'commit'
-                ? 'bg-[#21262d] text-white border-zinc-700 border-b-[#21262d]'
-                : 'text-zinc-400 hover:text-zinc-200 border-transparent'
-            }`}
-          >
-            <GitCommit size={13} className={activeTab === 'commit' ? 'text-zinc-200' : 'text-zinc-500'} />
-            <span>Commit</span>
-          </button>
+          {/* Scrollable commit form controls */}
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 pr-0.5">
+            {/* Tab switcher: Commit, Stash, Cloud */}
+            <div className="flex items-center gap-1 border-b border-zinc-800 pb-0 shrink-0">
+              <button
+                onClick={() => setActiveTab('commit')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-t font-medium text-xs border-t border-x transition-colors ${
+                  activeTab === 'commit'
+                    ? 'bg-[#21262d] text-white border-zinc-700 border-b-[#21262d]'
+                    : 'text-zinc-400 hover:text-zinc-200 border-transparent'
+                }`}
+              >
+                <GitCommit size={13} className={activeTab === 'commit' ? 'text-zinc-200' : 'text-zinc-500'} />
+                <span>Commit</span>
+              </button>
 
-          <button
-            onClick={() => {
-              setActiveTab('stash')
-              handleStash()
-            }}
-            className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded hover:bg-zinc-800/50 transition-colors"
-            title="Stash all changes"
-          >
-            <Archive size={13} />
-          </button>
+              <button
+                onClick={() => {
+                  setActiveTab('stash')
+                  handleStash()
+                }}
+                className="p-1 text-zinc-400 hover:text-zinc-200 rounded hover:bg-zinc-800/50 transition-colors"
+                title="Stash all changes"
+              >
+                <Archive size={13} />
+              </button>
 
-          <button
-            onClick={() => {
-              setActiveTab('cloud')
-              toast.info('Remote sync options')
-            }}
-            className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded hover:bg-zinc-800/50 transition-colors"
-            title="Cloud & Remotes"
-          >
-            <Cloud size={13} />
-          </button>
-        </div>
+              <button
+                onClick={() => {
+                  setActiveTab('cloud')
+                  toast.info('Remote sync options')
+                }}
+                className="p-1 text-zinc-400 hover:text-zinc-200 rounded hover:bg-zinc-800/50 transition-colors"
+                title="Cloud & Remotes"
+              >
+                <Cloud size={13} />
+              </button>
+            </div>
 
-        {/* Amend previous commit checkbox */}
-        <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={isAmend}
-            onChange={(e) => setIsAmend(e.target.checked)}
-            className="rounded border-zinc-700 bg-zinc-800 text-emerald-500 focus:ring-0"
-          />
-          <span>Amend previous commit</span>
-        </label>
+            {/* Amend previous commit checkbox */}
+            <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none shrink-0">
+              <input
+                type="checkbox"
+                checked={isAmend}
+                onChange={(e) => setIsAmend(e.target.checked)}
+                className="rounded border-zinc-700 bg-zinc-800 text-emerald-500 focus:ring-0"
+              />
+              <span>Amend previous commit</span>
+            </label>
 
-        {/* Unified Commit message card (Summary + Description) */}
-        <div className="rounded-md border border-zinc-700/80 bg-[#161b22] focus-within:border-zinc-500 transition-colors overflow-hidden">
-          {/* Commit summary row */}
-          <div className="flex items-center pr-1.5">
-            <input
-              type="text"
-              value={commitSummary}
-              onChange={(e) => setCommitSummary(e.target.value)}
-              placeholder="Commit summary"
-              className="flex-1 bg-transparent px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  handleCommit()
-                }
-              }}
-            />
+            {/* Unified Commit message card (Summary + Description) */}
+            <div className="rounded-md border border-zinc-700/80 bg-[#161b22] focus-within:border-zinc-500 transition-colors overflow-hidden shrink-0">
+              {/* Commit summary row */}
+              <div className="flex items-center pr-1.5">
+                <input
+                  type="text"
+                  value={commitSummary}
+                  onChange={(e) => setCommitSummary(e.target.value)}
+                  placeholder="Commit summary"
+                  className="flex-1 bg-transparent px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      handleCommit()
+                    }
+                  }}
+                />
 
-            {/* 72 Character counter indicator */}
-            <span
-              className={`text-xs font-mono pr-2 ${
-                charsRemaining < 0
-                  ? 'text-rose-400 font-bold'
-                  : charsRemaining < 10
-                    ? 'text-amber-400'
-                    : 'text-zinc-500'
-              }`}
-              title={`${charCount} / ${charLimit} characters`}
-            >
-              {charsRemaining}
-            </span>
+                {/* 72 Character counter indicator */}
+                <span
+                  className={`text-xs font-mono pr-2 ${
+                    charsRemaining < 0
+                      ? 'text-rose-400 font-bold'
+                      : charsRemaining < 10
+                        ? 'text-amber-400'
+                        : 'text-zinc-500'
+                  }`}
+                  title={`${charCount} / ${charLimit} characters`}
+                >
+                  {charsRemaining}
+                </span>
 
-            {/* AI sparkle action button */}
-            <button
-              onClick={handleGenerateAiCommit}
-              className="p-1 rounded border border-purple-500 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
-              title="Generate commit summary with AI"
-            >
-              <Sparkles size={12} />
-            </button>
+                {/* AI sparkle action button */}
+                <button
+                  onClick={handleGenerateAiCommit}
+                  className="p-1 rounded border border-purple-500 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+                  title="Generate commit summary with AI"
+                >
+                  <Sparkles size={12} />
+                </button>
+              </div>
+
+              {/* Description textarea row */}
+              <textarea
+                value={commitDescription}
+                onChange={(e) => setCommitDescription(e.target.value)}
+                placeholder="Description"
+                rows={2}
+                className="w-full bg-transparent px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 border-t border-zinc-800/80 focus:outline-none resize-none min-h-[50px]"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    handleCommit()
+                  }
+                }}
+              />
+            </div>
+
+            {/* Options & AI Compose row */}
+            <div className="flex items-center justify-between shrink-0">
+              <button
+                onClick={() => setCommitOptionsOpen(!commitOptionsOpen)}
+                className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+              >
+                {commitOptionsOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                <span>Commit options</span>
+              </button>
+
+              <button
+                onClick={handleGenerateAiCommit}
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-purple-500/80 bg-purple-950/40 text-purple-300 hover:bg-purple-900/50 text-[11px] font-medium transition-colors"
+              >
+                <Sparkles size={12} className="text-purple-400" />
+                <span>Compose commits with AI</span>
+              </button>
+            </div>
+
+            {/* Push after committing checkbox */}
+            <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none shrink-0">
+              <input
+                type="checkbox"
+                checked={pushAfterCommit}
+                onChange={(e) => setPushAfterCommit(e.target.checked)}
+                className="rounded border-zinc-700 bg-zinc-800 text-emerald-500 focus:ring-0"
+              />
+              <span>Push after committing</span>
+            </label>
           </div>
 
-          {/* Description textarea row */}
-          <textarea
-            value={commitDescription}
-            onChange={(e) => setCommitDescription(e.target.value)}
-            placeholder="Description"
-            rows={3}
-            className="w-full bg-transparent px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 border-t border-zinc-800/80 focus:outline-none resize-none min-h-[64px]"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                handleCommit()
-              }
-            }}
-          />
-        </div>
-
-        {/* Options & AI Compose row */}
-        <div className="flex items-center justify-between">
+          {/* Primary Action Button (-o- Commit) */}
           <button
-            onClick={() => setCommitOptionsOpen(!commitOptionsOpen)}
-            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+            disabled={!commitSummary.trim() || stagedFiles.length === 0 || isCommitting}
+            onClick={handleCommit}
+            className="w-full py-2 px-3 mt-2 rounded border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-900/30 text-emerald-400 disabled:opacity-40 disabled:border-zinc-700 disabled:bg-zinc-800/30 disabled:text-zinc-500 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed shrink-0"
           >
-            {commitOptionsOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            <span>Commit options</span>
-          </button>
-
-          <button
-            onClick={handleGenerateAiCommit}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-purple-500/80 bg-purple-950/40 text-purple-300 hover:bg-purple-900/50 text-[11px] font-medium transition-colors"
-          >
-            <Sparkles size={12} className="text-purple-400" />
-            <span>Compose commits with AI</span>
+            <GitCommit size={14} />
+            <span>
+              {commitSummary.trim()
+                ? isAmend
+                  ? `Amend Commit (${stagedFiles.length} file${stagedFiles.length !== 1 ? 's' : ''})`
+                  : `Commit changes to ${stagedFiles.length} file${stagedFiles.length !== 1 ? 's' : ''}`
+                : 'Type a Message to Commit'}
+            </span>
           </button>
         </div>
-
-        {/* Push after committing checkbox */}
-        <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={pushAfterCommit}
-            onChange={(e) => setPushAfterCommit(e.target.checked)}
-            className="rounded border-zinc-700 bg-zinc-800 text-emerald-500 focus:ring-0"
-          />
-          <span>Push after committing</span>
-        </label>
-
-        {/* Primary Action Button (-o- Commit) */}
-        <button
-          disabled={!commitSummary.trim() || stagedFiles.length === 0 || isCommitting}
-          onClick={handleCommit}
-          className="w-full py-2 px-3 rounded border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-900/30 text-emerald-400 disabled:opacity-40 disabled:border-zinc-700 disabled:bg-zinc-800/30 disabled:text-zinc-500 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed"
-        >
-          <GitCommit size={14} />
-          <span>
-            {commitSummary.trim()
-              ? isAmend
-                ? `Amend Commit (${stagedFiles.length} file${stagedFiles.length !== 1 ? 's' : ''})`
-                : `Commit changes to ${stagedFiles.length} file${stagedFiles.length !== 1 ? 's' : ''}`
-              : 'Type a Message to Commit'}
-          </span>
-        </button>
       </div>
     </div>
   )
