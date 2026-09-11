@@ -384,11 +384,17 @@ export function registerGitHandlers(ipcMain: IpcMain) {
     async (_event, opts?: PushOptions): Promise<IpcResult<boolean>> => {
       try {
         const g = await getGit()
-        const args: string[] = []
-        if (opts?.force) args.push('--force-with-lease')
-        if (opts?.setUpstream) args.push('--set-upstream')
         const remote = opts?.remote || 'origin'
-        const branch = opts?.branch
+        let branch = opts?.branch
+        if (!branch) {
+          const status = await g.status()
+          branch = status.current || undefined
+        }
+
+        const args: string[] = []
+        if (opts?.setUpstream) args.push('--set-upstream')
+        if (opts?.force) args.push('--force-with-lease')
+
         if (branch) {
           await g.push(remote, branch, args)
         } else {

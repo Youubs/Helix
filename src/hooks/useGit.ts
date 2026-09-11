@@ -79,7 +79,7 @@ export function useGit() {
   const push = useCallback(async (opts?: PushOptions) => {
     if (remotes.length === 0) {
       toast.error('No remote configured. Click "Remotes" in the toolbar to add origin.')
-      return
+      return { ok: false, error: 'No remote configured' }
     }
     const result = await window.gitAPI.push(opts)
     if (!result.ok) toast.error(result.error)
@@ -87,6 +87,7 @@ export function useGit() {
       toast.success('Push complete')
       await refresh()
     }
+    return result
   }, [refresh, remotes.length])
 
   const fetchAll = useCallback(async () => {

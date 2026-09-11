@@ -4,16 +4,41 @@ import { useGit } from '@/hooks/useGit'
 import { useGitStore } from '@/stores/gitStore'
 import { useRepoStore } from '@/stores/repoStore'
 import { RemoteManagerModal } from '@/components/modals/RemoteManagerModal'
+import { SetUpstreamModal } from '@/components/modals/SetUpstreamModal'
 import './Toolbar.css'
 
 export function Toolbar() {
   const { fetchAll, push, openRepo } = useGit()
   const loading = useGitStore((s) => s.loading)
   const status = useGitStore((s) => s.status)
+  const remotes = useGitStore((s) => s.remotes)
   const repoName = useRepoStore((s) => s.tabs.find((t) => t.id === s.activeTabId)?.name || 'Helix')
   const [remoteModalOpen, setRemoteModalOpen] = useState(false)
+  const [setUpstreamOpen, setSetUpstreamOpen] = useState(false)
 
   const currentBranch = status?.current ?? 'HEAD'
+  const primaryRemote = remotes[0]?.name || 'origin'
+
+  const handlePush = async () => {
+    if (remotes.length === 0) {
+      setRemoteModalOpen(true)
+      return
+    }
+
+    if (!status?.tracking) {
+      setSetUpstreamOpen(true)
+      return
+    }
+
+    const res = await push()
+    if (
+      res &&
+      !res.ok &&
+      (res.error?.includes('no upstream branch') || res.error?.includes('--set-upstream'))
+    ) {
+      setSetUpstreamOpen(true)
+    }
+  }
 
   return (
     <div className="toolbar titlebar-drag">
@@ -48,7 +73,7 @@ export function Toolbar() {
 
         <button
           className="toolbar-action-btn"
-          onClick={() => push()}
+          onClick={handlePush}
           disabled={loading}
           title="Push to remote (git push)"
         >
@@ -72,6 +97,13 @@ export function Toolbar() {
       <RemoteManagerModal
         open={remoteModalOpen}
         onOpenChange={setRemoteModalOpen}
+      />
+
+      <SetUpstreamModal
+        open={setUpstreamOpen}
+        onOpenChange={setSetUpstreamOpen}
+        branch={currentBranch}
+        remote={primaryRemote}
       />
     </div>
   )
