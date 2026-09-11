@@ -1,0 +1,51 @@
+.icon-sidebar {
+  width: 32px;
+  min-width: 32px;
+  height: 100%;
+  background: var(--bg-app);
+  border-right: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.icon-sidebar-btn {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 80ms, color 80ms;
+}
+.icon-sidebar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.icon-sidebar-btn.active {
+  color: var(--accent-primary);
+}
+
+.icon-sidebar-btn .badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 14px;
+  text-align: center;
+}

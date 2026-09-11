@@ -1,0 +1,82 @@
+.branch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+  max-width: 140px;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+
+  color: color-mix(in srgb, var(--lane-color) 85%, white 15%);
+  background: color-mix(in srgb, var(--lane-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lane-color) 25%, transparent);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.branch-label:hover {
+  background: color-mix(in srgb, var(--lane-color) 22%, transparent);
+  border-color: color-mix(in srgb, var(--lane-color) 45%, transparent);
+}
+
+.branch-label[data-active="true"] {
+  background: color-mix(in srgb, var(--lane-color) 25%, transparent);
+  border-color: color-mix(in srgb, var(--lane-color) 50%, transparent);
+  font-weight: 600;
+}
+
+.branch-label[data-kind="remote"] {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.branch-label[data-kind="tag"] {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.branch-label[data-kind="head"] {
+  color: var(--accent-primary);
+  background: var(--accent-primary-muted);
+  border-color: rgba(0, 208, 163, 0.35);
+}
+
+.branch-label__check {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.branch-label__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.branch-label__icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.branch-label__badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0 3px;
+  border-radius: 2px;
+}
